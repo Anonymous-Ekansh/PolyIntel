@@ -1,0 +1,145 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: #0a0a0f;
+    --foreground: #c8c8d4;
+    --card: #0f0f1a;
+    --card-foreground: #c8c8d4;
+    --popover: #0f0f1a;
+    --popover-foreground: #c8c8d4;
+    --primary: #00ff88;
+    --primary-foreground: #0a0a0f;
+    --secondary: #1e1e3a;
+    --secondary-foreground: #c8c8d4;
+    --muted: #1e1e3a;
+    --muted-foreground: #c8c8d480;
+    --accent: #1e1e3a;
+    --accent-foreground: #c8c8d4;
+    --destructive: #ff4444;
+    --border: #1e1e3a;
+    --input: #1e1e3a;
+    --ring: #00ff88;
+    --chart-1: #00ff88;
+    --chart-2: #ffaa00;
+    --chart-3: #ff4444;
+    --chart-4: #8b5cf6;
+    --chart-5: #06b6d4;
+    --radius: 0.5rem;
+    --sidebar: #0f0f1a;
+    --sidebar-foreground: #c8c8d4;
+    --sidebar-primary: #00ff88;
+    --sidebar-primary-foreground: #0a0a0f;
+    --sidebar-accent: #1e1e3a;
+    --sidebar-accent-foreground: #c8c8d4;
+    --sidebar-border: #1e1e3a;
+    --sidebar-ring: #00ff88;
+  }
+  /* Force dark theme — no separate .dark block needed */
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+  }
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #1e1e3a #0a0a0f;
+  }
+  ::selection {
+    background: rgba(0, 255, 136, 0.2);
+    color: #f4fff9;
+  }
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e1e3a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2e2e4a;
+}
+
+/* Glow effects */
+.glow-green {
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3), 0 0 20px rgba(0, 255, 136, 0.1);
+}
+.glow-amber {
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.3), 0 0 20px rgba(255, 170, 0, 0.1);
+}
+.glow-red {
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.3), 0 0 20px rgba(255, 68, 68, 0.1);
+}
+
+/* Panel grid animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Pulse dot animation */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.animate-pulse-dot {
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* Scanlines overlay */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+}
+
+.leaflet-container {
+  background: #0a0a0f;
+  color: #c8c8d4;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+}
+
+.leaflet-control-attribution {
+  display: none;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0f0f1a;
+  color: #c8c8d4;
+  border: 1px solid #1e1e3a;
+}
