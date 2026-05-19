@@ -18,9 +18,9 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "POLYINTEL | Polymarket Intelligence Dashboard",
+  title: "POLYINTEL | Live Polymarket Research",
   description:
-    "Browser-only Polymarket intelligence terminal with EV scanning, live market mapping, matched news, whale flow, paper trading, and risk controls.",
+    "Browse live Polymarket bets and open a dedicated research page for each market.",
 };
 
 export default function RootLayout({
