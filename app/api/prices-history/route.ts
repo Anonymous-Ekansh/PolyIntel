@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     interval: "1m",
   });
 
-  const res = await fetch(`https://clob.polymarket.com/prices-history?${params.toString()}`, {
+  const url = `https://clob.polymarket.com/prices-history?${params.toString()}`;
+  const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
     next: { revalidate: 30 },
   });
   const data = await res.json();

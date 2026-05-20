@@ -4,6 +4,8 @@ import { normalizeMarket } from "@/lib/ev";
 const GAMMA_BASE_URL = "https://gamma-api.polymarket.com";
 const CLOB_BASE_URL = "https://clob.polymarket.com";
 
+const withProxy = (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+
 function parseArray<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
   return [];
@@ -30,7 +32,7 @@ export async function fetchAllMarkets(): Promise<Market[]> {
   const responses = await Promise.all(
     pages.map(async (offset) => {
       const url = `${GAMMA_BASE_URL}/markets?active=true&closed=false&limit=${pageSize}&offset=${offset}`;
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetch(withProxy(url), { cache: "no-store" });
       if (!response.ok) throw new Error("Failed to fetch markets");
       return (await response.json()) as RawMarket[];
     }),
@@ -47,7 +49,8 @@ export async function fetchAllMarkets(): Promise<Market[]> {
 }
 
 export async function fetchOrderBook(tokenId: string): Promise<OrderBook> {
-  const response = await fetch(`${CLOB_BASE_URL}/book?token_id=${encodeURIComponent(tokenId)}`, {
+  const url = `${CLOB_BASE_URL}/book?token_id=${encodeURIComponent(tokenId)}`;
+  const response = await fetch(withProxy(url), {
     cache: "no-store",
   });
   if (!response.ok) throw new Error("Failed to fetch order book");
@@ -78,7 +81,8 @@ export async function fetchPriceHistory(tokenId: string, startTs: number): Promi
     interval: "1m",
     startTs: `${startTs}`,
   });
-  const response = await fetch(`${CLOB_BASE_URL}/prices-history?${params.toString()}`, {
+  const url = `${CLOB_BASE_URL}/prices-history?${params.toString()}`;
+  const response = await fetch(withProxy(url), {
     cache: "no-store",
   });
   if (!response.ok) throw new Error("Failed to fetch price history");
@@ -98,10 +102,8 @@ export async function fetchPriceHistory(tokenId: string, startTs: number): Promi
 }
 
 export async function fetchTrades(conditionId: string, limit = 100): Promise<Trade[]> {
-  const response = await fetch(
-    `${CLOB_BASE_URL}/trades?market=${encodeURIComponent(conditionId)}&limit=${limit}`,
-    { cache: "no-store" },
-  );
+  const url = `${CLOB_BASE_URL}/trades?market=${encodeURIComponent(conditionId)}&limit=${limit}`;
+  const response = await fetch(withProxy(url), { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch trades");
 
   const json = (await response.json()) as { data?: unknown[] } | unknown[];
