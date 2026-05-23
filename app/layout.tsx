@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Syne } from "next/font/google";
-import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/app/providers";
+import NavBar from "@/components/NavBar";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -18,9 +18,9 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "POLYINTEL | Live Polymarket Research",
+  title: "POLYINTEL | Live Polymarket Intelligence",
   description:
-    "Browse live Polymarket bets and open a dedicated research page for each market.",
+    "Real-time Polymarket analytics dashboard with smart bet advisor, market scanning, and news integration. 100% free, no paid APIs.",
 };
 
 export default function RootLayout({
@@ -31,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(jetbrainsMono.variable, syne.variable)}>
       <body className="min-h-screen bg-[#0a0a0f] font-mono text-[#c8c8d4] antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <NavBar />
+          <main>{children}</main>
+        </Providers>
       </body>
     </html>
   );

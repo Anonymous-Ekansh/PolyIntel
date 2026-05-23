@@ -1,5 +1,11 @@
 import MarketResearchPage from "@/components/market/MarketResearchPage";
 
-export default function Page({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function MarketDetailPage({ params }: PageProps) {
   return <MarketResearchPage marketId={params.id} />;
 }

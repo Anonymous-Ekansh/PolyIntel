@@ -1,128 +1,158 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MarketNewsTab from "@/components/market/MarketNewsTab";
-import MarketPriceChartTab from "@/components/market/MarketPriceChartTab";
-import MarketRelatedBetsTab from "@/components/market/MarketRelatedBetsTab";
-import MarketOrderBookTab from "@/components/market/MarketOrderBookTab";
-import { formatTimeRemaining, getRelatedMarkets, LiveBetMarket, normalizeMarket } from "@/lib/market-helpers";
 import { formatPercent, formatUsd } from "@/lib/utils";
-import { RawMarket } from "@/types";
+import WatchlistButton from "@/components/WatchlistButton";
 
-async function fetchMarkets() {
-  const res = await fetch("/api/markets");
-  if (!res.ok) throw new Error("Failed to load markets");
-  const data = (await res.json()) as RawMarket[];
-  return data
-    .map(normalizeMarket)
-    .filter((market): market is LiveBetMarket => Boolean(market));
+import ProbabilityChart from "./ProbabilityChart";
+import VolumeChart from "./VolumeChart";
+import OrderBookPanel from "./OrderBookPanel";
+import TradesTable from "./TradesTable";
+import AdvisorPanel from "./AdvisorPanel";
+import NewsPanel from "./NewsPanel";
+
+interface Market {
+  id: string;
+  conditionId: string;
+  question: string;
+  yesPrice: number;
+  noPrice: number;
+  volume24hr: number;
+  liquidity: number;
+  endDate: string;
+  category: string;
+  tokenIds: string[];
 }
 
 export default function MarketResearchPage({ marketId }: { marketId: string }) {
-  const marketsQuery = useQuery({
-    queryKey: ["markets", marketId],
-    queryFn: fetchMarkets,
-    staleTime: 30_000,
+  const { data: market, isLoading, isError } = useQuery<Market>({
+    queryKey: ["market", marketId],
+    queryFn: async () => {
+      const res = await fetch(`/api/market/${marketId}`);
+      if (!res.ok) throw new Error("Failed to fetch market");
+      return res.json();
+    },
     refetchInterval: 60_000,
   });
 
-  const market = useMemo(
-    () => marketsQuery.data?.find((entry) => entry.id === marketId),
-    [marketId, marketsQuery.data],
-  );
-  const relatedMarkets = useMemo(
-    () => (market && marketsQuery.data ? getRelatedMarkets(marketsQuery.data, market) : []),
-    [market, marketsQuery.data],
-  );
-
   return (
-    <div className="min-h-screen bg-[#0a0a0f] px-4 py-6 text-[#c8c8d4] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1480px]">
-        <div className="mb-5">
+    <div className="min-h-screen bg-[#0a0a0f] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1680px]">
+        <div className="mb-6">
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#1e1e3a] bg-[#0f1421] px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#b4bbce] hover:border-[#334066] hover:text-white"
+            href="/markets"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#1e1e3a] bg-[#101422] px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[#8b93a7] transition-colors hover:border-[#334066] hover:text-white"
           >
             <ArrowLeft className="size-4" />
-            Back to all bets
+            Back to Markets
           </Link>
         </div>
 
-        {marketsQuery.isLoading ? (
-          <div className="space-y-4">
-            <div className="h-40 animate-pulse rounded-3xl border border-[#1e1e3a] bg-[#0f0f1a]" />
-            <div className="h-[520px] animate-pulse rounded-3xl border border-[#1e1e3a] bg-[#0f0f1a]" />
+        {isLoading ? (
+          <div className="space-y-6 animate-pulse">
+            <div className="h-40 rounded-2xl bg-[#1e1e3a]/30" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 h-[500px] rounded-2xl bg-[#1e1e3a]/30" />
+              <div className="h-[500px] rounded-2xl bg-[#1e1e3a]/30" />
+            </div>
           </div>
-        ) : !market ? (
-          <div className="rounded-3xl border border-[#1e1e3a] bg-[#0f0f1a] p-8 text-sm text-[#aab2c7]">
-            Market not found.
+        ) : isError || !market ? (
+          <div className="rounded-2xl border border-[#ff4444]/20 bg-[#2a1014] p-8 text-center text-sm text-[#ffc2c2]">
+            Market not found or failed to load.
           </div>
         ) : (
-          <div className="space-y-5">
-            <Card className="border border-[#1e1e3a] bg-[linear-gradient(135deg,rgba(15,15,26,0.98),rgba(12,16,25,0.98))]">
+          <div className="space-y-6">
+            {/* Header Card */}
+            <Card className="border-[#1e1e3a] bg-[linear-gradient(135deg,rgba(15,15,26,0.98),rgba(12,16,25,0.98))]">
               <CardContent className="p-6">
-                <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                  <div className="max-w-4xl">
-                    <div className="text-[10px] uppercase tracking-[0.26em] text-[#6f768c]">Market research</div>
-                    <h1 className="mt-3 font-heading text-3xl leading-tight text-white">{market.question}</h1>
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="text-[10px] uppercase tracking-widest text-[#8b5cf6] bg-[#8b5cf6]/10 px-2 py-0.5 rounded border border-[#8b5cf6]/20">
+                        {market.category || "General"}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-widest text-[#6d7488]">
+                        ID: {market.conditionId.slice(0, 10)}...
+                      </div>
+                    </div>
+                    <div className="flex items-start justify-between gap-4">
+                      <h1 className="font-heading text-2xl leading-snug text-white max-w-3xl">
+                        {market.question}
+                      </h1>
+                      <WatchlistButton conditionId={market.conditionId} size="md" className="shrink-0" />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <div className="rounded-2xl border border-[#133423] bg-[#0b1611] p-4">
-                      <div className="text-[10px] uppercase tracking-[0.24em] text-[#5f8d76]">YES</div>
-                      <div className="mt-2 text-3xl font-semibold text-[#00ff88]">{formatPercent(market.yesPrice)}</div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 shrink-0">
+                    <div className="rounded-xl border border-[#133423] bg-[#0b1611] p-4 text-center">
+                      <div className="text-[10px] uppercase tracking-widest text-[#5f8d76]">YES</div>
+                      <div className="mt-1 text-2xl font-bold text-[#00ff88]">{formatPercent(market.yesPrice, 0)}</div>
                     </div>
-                    <div className="rounded-2xl border border-[#3d171b] bg-[#170b0e] p-4">
-                      <div className="text-[10px] uppercase tracking-[0.24em] text-[#b47a82]">NO</div>
-                      <div className="mt-2 text-3xl font-semibold text-[#ff4444]">{formatPercent(market.noPrice)}</div>
+                    <div className="rounded-xl border border-[#3d171b] bg-[#170b0e] p-4 text-center">
+                      <div className="text-[10px] uppercase tracking-widest text-[#b47a82]">NO</div>
+                      <div className="mt-1 text-2xl font-bold text-[#ff4444]">{formatPercent(market.noPrice, 0)}</div>
                     </div>
-                    <div className="rounded-2xl border border-[#1e1e3a] bg-[#0f1421] p-4">
-                      <div className="text-[10px] uppercase tracking-[0.24em] text-[#6f768c]">Volume</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">{formatUsd(market.volume24hr, true)}</div>
+                    <div className="rounded-xl border border-[#1e1e3a] bg-[#101422] p-4 text-center">
+                      <div className="text-[10px] uppercase tracking-widest text-[#6d7488]">Volume</div>
+                      <div className="mt-1 text-xl font-mono text-white">{formatUsd(market.volume24hr, true)}</div>
                     </div>
-                    <div className="rounded-2xl border border-[#1e1e3a] bg-[#0f1421] p-4">
-                      <div className="text-[10px] uppercase tracking-[0.24em] text-[#6f768c]">Time Left</div>
-                      <div className="mt-2 text-lg font-semibold text-white">{formatTimeRemaining(market.endDate)}</div>
+                    <div className="rounded-xl border border-[#1e1e3a] bg-[#101422] p-4 text-center">
+                      <div className="text-[10px] uppercase tracking-widest text-[#6d7488]">Ends</div>
+                      <div className="mt-1 text-sm font-mono text-white mt-2">
+                        {market.endDate ? formatDistanceToNowStrict(new Date(market.endDate), { addSuffix: true }) : "—"}
+                      </div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Tabs defaultValue="news" className="gap-4">
-              <TabsList variant="line" className="w-full justify-start gap-2 rounded-2xl border border-[#1e1e3a] bg-[#0f1421] p-2">
-                <TabsTrigger className="rounded-xl px-4 py-2 data-active:bg-[#131b2b] data-active:text-white" value="news">
-                  NEWS
-                </TabsTrigger>
-                <TabsTrigger className="rounded-xl px-4 py-2 data-active:bg-[#131b2b] data-active:text-white" value="chart">
-                  PRICE CHART
-                </TabsTrigger>
-                <TabsTrigger className="rounded-xl px-4 py-2 data-active:bg-[#131b2b] data-active:text-white" value="related">
-                  RELATED BETS
-                </TabsTrigger>
-                <TabsTrigger className="rounded-xl px-4 py-2 data-active:bg-[#131b2b] data-active:text-white" value="orderbook">
-                  ORDER BOOK
-                </TabsTrigger>
-              </TabsList>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Column: Charts */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="border-[#1e1e3a] bg-[#0c1019]">
+                  <CardContent className="p-6">
+                    <ProbabilityChart tokenId={market.tokenIds[0]} />
+                    <VolumeChart volume24h={market.volume24hr} />
+                  </CardContent>
+                </Card>
 
-              <TabsContent value="news">
-                <MarketNewsTab market={market} />
-              </TabsContent>
-              <TabsContent value="chart">
-                <MarketPriceChartTab market={market} />
-              </TabsContent>
-              <TabsContent value="related">
-                <MarketRelatedBetsTab markets={relatedMarkets} />
-              </TabsContent>
-              <TabsContent value="orderbook">
-                <MarketOrderBookTab market={market} />
-              </TabsContent>
-            </Tabs>
+                {/* Advisor Panel */}
+                <AdvisorPanel 
+                  conditionId={market.conditionId} 
+                  tokenId={market.tokenIds[0]} 
+                  endDate={market.endDate} 
+                  yesPrice={market.yesPrice}
+                  liquidity={market.liquidity}
+                  volume24h={market.volume24hr}
+                />
+              </div>
+
+              {/* Right Column: Orderbook & Trades */}
+              <div className="space-y-6">
+                <OrderBookPanel tokenId={market.tokenIds[0]} />
+                <TradesTable conditionId={market.conditionId} />
+              </div>
+
+            </div>
+
+            {/* Bottom Row: News */}
+            <div className="pt-4">
+              <h2 className="text-lg uppercase tracking-widest text-white mb-4 flex items-center gap-2">
+                <span className="flex size-5 items-center justify-center rounded-sm bg-[#00ff88]/20 text-[#00ff88]">
+                  📰
+                </span>
+                Related News
+              </h2>
+              <NewsPanel question={market.question} category={market.category} />
+            </div>
+
           </div>
         )}
       </div>
