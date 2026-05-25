@@ -35,10 +35,16 @@ async function runAnomalyDetection() {
       const volume24h = market.volume24hr;
       const totalVolume = market.totalVolume;
 
+      // Quality Control: Ignore illiquid or tiny volume markets
+      if (liquidity < 5000 || totalVolume < 1000) continue;
+
       // 1. VOLUME SPIKE DETECTION
-      const avg14dVolume = totalVolume > volume24h ? (totalVolume - volume24h) / 14 : volume24h * 0.9;
-      const volRatio = avg14dVolume > 0 ? volume24h / avg14dVolume : 1.0;
-      if (volRatio > 3 && volume24h > 1000) {
+      // Baseline enforcement: average volume must be at least 500 to prevent divide-by-near-zero absurd ratios
+      const avg14dVolume = totalVolume > volume24h ? Math.max((totalVolume - volume24h) / 14, 500) : Math.max(volume24h * 0.9, 500);
+      const volRatio = volume24h / avg14dVolume;
+      
+      // Ignore tiny absolute volume spikes (must be at least 5000 USDC spike)
+      if (volRatio > 3 && volume24h > 5000) {
         addAnomaly({
           marketId,
           question: market.question,
@@ -90,17 +96,20 @@ async function runAnomalyDetection() {
       if (lastLiquidityState) {
         // Compare if last state is from a previous run
         const liquidityDrop = lastLiquidityState.liquidity - liquidity;
-        const dropPct = lastLiquidityState.liquidity > 0 ? (liquidityDrop / lastLiquidityState.liquidity) * 100 : 0;
-        
-        if (dropPct > 30 && lastLiquidityState.liquidity > 5000) {
-          addAnomaly({
-            marketId,
-            question: market.question,
-            type: "LIQUIDITY_DROP",
-            severity: dropPct > 50 ? "HIGH" : "MEDIUM",
-            dropPct: parseFloat(dropPct.toFixed(1)),
-            detail: `Liquidity drained by ${dropPct.toFixed(1)}% ($${lastLiquidityState.liquidity.toLocaleString()} -> $${liquidity.toLocaleString()})`,
-          });
+        // Ignore tiny absolute liquidity changes
+        if (lastLiquidityState.liquidity > 10000 && liquidityDrop > 2000) {
+          const dropPct = (liquidityDrop / lastLiquidityState.liquidity) * 100;
+          
+          if (dropPct > 30) {
+            addAnomaly({
+              marketId,
+              question: market.question,
+              type: "LIQUIDITY_DROP",
+              severity: dropPct > 50 ? "HIGH" : "MEDIUM",
+              dropPct: parseFloat(dropPct.toFixed(1)),
+              detail: `Liquidity drained by ${dropPct.toFixed(1)}% ($${lastLiquidityState.liquidity.toLocaleString()} -> $${liquidity.toLocaleString()})`,
+            });
+          }
         }
       }
       liquidityHistoryRegistry.set(marketId, { timestamp: now, liquidity });
@@ -119,7 +128,8 @@ async function runAnomalyDetection() {
             const bidDepth = top5Bids.reduce((acc, b) => acc + parseFloat(b.size) * parseFloat(b.price), 0);
             const askDepth = top5Asks.reduce((acc, a) => acc + parseFloat(a.size) * parseFloat(a.price), 0);
             
-            if (bidDepth > 0 && askDepth > 0) {
+            // Baseline enforcement: depth must be at least 1000 USDC to qualify for imbalance
+            if (bidDepth > 1000 && askDepth > 1000) {
               const imbalanceRatio = bidDepth / askDepth;
               if (imbalanceRatio > 3) {
                 addAnomaly({

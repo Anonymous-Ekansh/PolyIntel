@@ -102,22 +102,37 @@ router.get("/best-bets", async (req, res) => {
         };
       });
 
-      // Filter: Confidence >= MEDIUM only
-      const highConfidence = scored.filter(
-        (m) => m.advisor.confidence === "HIGH" || m.advisor.confidence === "MEDIUM"
-      );
+      // Filter: Relax confidence gating. If we have scored markets, we want to show something.
+      // We will accept any confidence level.
 
-      // Top 5 STRONG/LEAN YES (finalScore >= 3)
-      const topYes = highConfidence
-        .filter((m) => m.advisor.finalScore >= 3)
+      // Top 5 YES picks (finalScore >= 1 to relax from 3)
+      const topYes = scored
+        .filter((m) => m.advisor.finalScore >= 1)
         .sort((a, b) => b.advisor.finalScore - a.advisor.finalScore)
         .slice(0, 5);
 
-      // Top 5 STRONG/LEAN NO (finalScore <= -3)
-      const topNo = highConfidence
-        .filter((m) => m.advisor.finalScore <= -3)
+      // Top 5 NO picks (finalScore <= -1 to relax from -3)
+      const topNo = scored
+        .filter((m) => m.advisor.finalScore <= -1)
         .sort((a, b) => a.advisor.finalScore - b.advisor.finalScore) // most negative first
         .slice(0, 5);
+      
+      // Fallback: If no picks found based on score, compute lightweight recommendations
+      if (topYes.length === 0) {
+        // Fallback YES picks based on liquidity and price edge
+        scored.filter(m => m.yesPrice >= 30 && m.yesPrice <= 70 && m.liquidity > 5000 && m.volume24hr > 1000)
+              .sort((a, b) => b.volume24hr - a.volume24hr)
+              .slice(0, 5)
+              .forEach(m => topYes.push(m));
+      }
+
+      if (topNo.length === 0) {
+        // Fallback NO picks based on liquidity and price edge
+        scored.filter(m => m.noPrice >= 30 && m.noPrice <= 70 && m.liquidity > 5000 && m.volume24hr > 1000)
+              .sort((a, b) => b.volume24hr - a.volume24hr)
+              .slice(0, 5)
+              .forEach(m => topNo.push(m));
+      }
 
       return {
         yesPicks: topYes,

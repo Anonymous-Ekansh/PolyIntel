@@ -404,9 +404,14 @@ function scoreMarket({ market, priceHistory = [], trades = [], orderbook = { bid
   else if (confidenceScore >= 0.4) confidenceLabel = "MEDIUM";
 
   // ============================================================
-  // AUTO-GENERATED REASONING
+  // AUTO-GENERATED REASONING (Separated)
   // ============================================================
-  const reasoning = `${momentumLabel}. ${volumeLabel}. ${orderFlowLabel}. At ${yesPrice.toFixed(0)}% probability with ${daysLeft} days remaining, ${timeLabel}. Overall signal is ${recommendation.rec} with ${confidenceLabel} confidence based on ${(confidenceScore * 100).toFixed(0)}% data completeness.`;
+  const reasoning = {
+    facts: `Market is priced at ${yesPrice.toFixed(0)}% with ${daysLeft} days left. 24h volume is $${volume24hr.toLocaleString()} and liquidity is $${liquidity.toLocaleString()}.`,
+    inference: `${momentumLabel}. ${volumeLabel}. ${orderFlowLabel}.`,
+    assumptions: `Assumes historical volume trends hold and orderbook depths reflect true market-maker support rather than spoofing.`,
+    confidence: `Based on ${(confidenceScore * 100).toFixed(0)}% data completeness, confidence in this signal is ${confidenceLabel}.`,
+  };
 
   // ============================================================
   // COUNTER-ARGUMENTS
@@ -472,9 +477,9 @@ function scoreMarket({ market, priceHistory = [], trades = [], orderbook = { bid
   const halfKelly = kellyPct / 2;
 
   const positionSizing = {
-    suggestedSizePct: parseFloat(halfKelly.toFixed(1)),
-    maxSizePct: parseFloat(kellyPct.toFixed(1)),
-    note: "Half-Kelly sizing. Mathematical suggestion only.",
+    suggestedSizePct: Math.round(halfKelly),
+    maxSizePct: Math.round(kellyPct),
+    note: "Approximated Kelly sizing. Mathematical suggestion only, not financial advice.",
   };
 
   // ============================================================

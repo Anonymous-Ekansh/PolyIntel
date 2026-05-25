@@ -94,7 +94,16 @@ export default function AdvisorPanel({ score }: AdvisorPanelProps) {
 
         <div className="rounded-xl bg-[#101422] border border-[#1e1e3a] p-4 text-sm text-[#d7d7e2] leading-relaxed relative">
           <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#8b5cf6] rounded-l-xl" />
-          {summary || score.reasoning}
+          {typeof (summary || score.reasoning) === 'string' ? (
+            <span>{summary || score.reasoning}</span>
+          ) : (score.reasoning ? (
+            <div className="space-y-2 text-xs">
+              <p><span className="text-white font-semibold uppercase tracking-wider text-[10px]">Facts:</span> {score.reasoning.facts}</p>
+              <p><span className="text-white font-semibold uppercase tracking-wider text-[10px]">Inference:</span> {score.reasoning.inference}</p>
+              <p><span className="text-white font-semibold uppercase tracking-wider text-[10px]">Assumptions:</span> {score.reasoning.assumptions}</p>
+              <p><span className="text-white font-semibold uppercase tracking-wider text-[10px]">Confidence:</span> {score.reasoning.confidence}</p>
+            </div>
+          ) : null)}
         </div>
 
         <div className="mt-4 flex items-center gap-2 text-[10px] text-[#6d7488]">
