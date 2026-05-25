@@ -1,61 +1,25 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface AdvisorPanelProps {
-  conditionId: string;
-  tokenId: string;
-  endDate: string;
-  yesPrice: number;
-  liquidity: number;
-  volume24h: number;
+  score: any;
 }
 
-export default function AdvisorPanel({
-  conditionId,
-  tokenId,
-  endDate,
-  yesPrice,
-  liquidity,
-  volume24h,
-}: AdvisorPanelProps) {
-  const { data: advisor, isLoading, isError } = useQuery({
-    queryKey: ["advisor", conditionId],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        conditionId,
-        tokenId,
-        endDate,
-        yesPrice: yesPrice.toString(),
-        liquidity: liquidity.toString(),
-        volume24h: volume24h.toString(),
-      });
-      const res = await fetch(`/api/advisor?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch advisor score");
-      return res.json();
-    },
-    staleTime: 60_000,
-  });
-
-  if (isLoading) {
-    return (
-      <Card className="border-[#1e1e3a] bg-[#0c1019] animate-pulse">
-        <CardContent className="p-6 h-64" />
-      </Card>
-    );
-  }
-
-  if (isError || !advisor) {
+export default function AdvisorPanel({ score }: AdvisorPanelProps) {
+  if (!score) {
     return null;
   }
 
-  const { recommendation, confidence, finalScore, components, summary } = advisor;
+  const { recommendation, confidence, finalScore, components, factors, summary } = score;
 
   const isPositive = finalScore > 0;
   const isNeutral = finalScore === 0;
+
+  // Use components or factors depending on backend representation
+  const fact = factors || components || {};
   
   return (
     <Card className="border-[#1e1e3a] bg-[#0c1019] overflow-hidden">
@@ -76,12 +40,12 @@ export default function AdvisorPanel({
             <Badge 
               variant="outline" 
               className={
-                recommendation === "LEAN_YES" ? "border-[#00ff88]/30 text-[#00ff88] bg-[#00ff88]/10" :
-                recommendation === "LEAN_NO" ? "border-[#ff4444]/30 text-[#ff4444] bg-[#ff4444]/10" :
+                recommendation === "LEAN_YES" || recommendation === "STRONG_YES" ? "border-[#00ff88]/30 text-[#00ff88] bg-[#00ff88]/10" :
+                recommendation === "LEAN_NO" || recommendation === "STRONG_NO" ? "border-[#ff4444]/30 text-[#ff4444] bg-[#ff4444]/10" :
                 "border-[#8b93a7]/30 text-[#8b93a7] bg-[#8b93a7]/10"
               }
             >
-              {recommendation.replace("_", " ")}
+              {recommendation?.replace("_", " ") ?? "UNKNOWN"}
             </Badge>
           </div>
           <div>
@@ -120,15 +84,17 @@ export default function AdvisorPanel({
         </div>
 
         <div className="space-y-4 mb-6">
-          <ScoreRow name="Momentum" data={components.momentum} />
-          <ScoreRow name="Volume Trend" data={components.volume} />
-          <ScoreRow name="Order Flow" data={components.orderFlow} />
-          <ScoreRow name="Time Value" data={components.timeValue} />
+          {fact.momentum && <ScoreRow name="Momentum" data={fact.momentum} />}
+          {fact.volume && <ScoreRow name="Volume Trend" data={fact.volume} />}
+          {fact.orderFlow && <ScoreRow name="Order Flow" data={fact.orderFlow} />}
+          {fact.edge && <ScoreRow name="Edge" data={fact.edge} />}
+          {fact.orderbook && <ScoreRow name="Orderbook" data={fact.orderbook} />}
+          {fact.timeValue && <ScoreRow name="Time Value" data={fact.timeValue} />}
         </div>
 
         <div className="rounded-xl bg-[#101422] border border-[#1e1e3a] p-4 text-sm text-[#d7d7e2] leading-relaxed relative">
           <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#8b5cf6] rounded-l-xl" />
-          {summary}
+          {summary || score.reasoning}
         </div>
 
         <div className="mt-4 flex items-center gap-2 text-[10px] text-[#6d7488]">

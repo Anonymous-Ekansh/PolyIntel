@@ -1,35 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { ArrowDownRight, ArrowUpRight, History } from "lucide-react";
 import { formatUsd } from "@/lib/utils";
 
 interface TradesTableProps {
-  conditionId: string;
+  trades: any[];
 }
 
-export default function TradesTable({ conditionId }: TradesTableProps) {
-  const { data: trades, isLoading, isError } = useQuery({
-    queryKey: ["trades", conditionId],
-    queryFn: async () => {
-      const res = await fetch(`/api/trades?conditionId=${conditionId}&limit=50`);
-      if (!res.ok) throw new Error("Failed to fetch trades");
-      return res.json();
-    },
-    refetchInterval: 30_000,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="animate-pulse space-y-2">
-        <div className="h-8 bg-[#1e1e3a]/30 rounded" />
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-12 bg-[#1e1e3a]/20 rounded" />)}
-      </div>
-    );
-  }
-
-  if (isError || !trades || trades.length === 0) {
+export default function TradesTable({ trades }: TradesTableProps) {
+  if (!trades || trades.length === 0) {
     return (
       <div className="rounded-xl border border-[#1e1e3a] bg-[#101422] p-6 text-center text-sm text-[#8b93a7]">
         No recent trades available.
@@ -46,7 +26,7 @@ export default function TradesTable({ conditionId }: TradesTableProps) {
       
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#1e1e3a] scrollbar-track-transparent">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="sticky top-0 bg-[#0c1019] text-[10px] uppercase tracking-wider text-[#6d7488] shadow-sm">
+          <thead className="sticky top-0 bg-[#0c1019] text-[10px] uppercase tracking-wider text-[#6d7488] shadow-sm z-20">
             <tr>
               <th className="px-4 py-2 font-medium">Time</th>
               <th className="px-4 py-2 font-medium">Side</th>
@@ -56,12 +36,12 @@ export default function TradesTable({ conditionId }: TradesTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1e1e3a]/50">
-            {trades.map((trade: any) => {
+            {trades.map((trade: any, i: number) => {
               const isBuy = trade.side === "BUY";
               return (
-                <tr key={trade.id} className="hover:bg-[#131b2b] transition-colors">
+                <tr key={trade.id || i} className="hover:bg-[#131b2b] transition-colors">
                   <td className="px-4 py-2.5 text-[#8b93a7]">
-                    {formatDistanceToNowStrict(trade.timestamp, { addSuffix: true })}
+                    {trade.timestamp ? formatDistanceToNowStrict(trade.timestamp, { addSuffix: true }) : "-"}
                   </td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
@@ -72,13 +52,13 @@ export default function TradesTable({ conditionId }: TradesTableProps) {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono text-[#d7d7e2]">
-                    ${trade.price.toFixed(3)}
+                    ${Number(trade.price).toFixed(3)}
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono text-[#d7d7e2]">
-                    {trade.size.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    {Number(trade.size).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono font-medium">
-                    {formatUsd(trade.sizeUSDC)}
+                    {formatUsd(trade.sizeUSDC ?? (Number(trade.price) * Number(trade.size)))}
                   </td>
                 </tr>
               );

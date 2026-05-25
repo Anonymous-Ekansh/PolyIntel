@@ -1,49 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { format } from "date-fns";
-import { formatPercent } from "@/lib/utils";
 
 interface ProbabilityChartProps {
-  tokenId: string;
+  history: any[];
 }
 
 type Timeframe = "1d" | "7d" | "30d" | "all";
 
-export default function ProbabilityChart({ tokenId }: ProbabilityChartProps) {
+export default function ProbabilityChart({ history }: ProbabilityChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("7d");
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["price-history", tokenId, timeframe],
-    queryFn: async () => {
-      // Calculate startTs based on timeframe
-      let startTs = "";
-      const now = Date.now();
-      if (timeframe === "1d") startTs = Math.floor((now - 24 * 60 * 60 * 1000) / 1000).toString();
-      else if (timeframe === "7d") startTs = Math.floor((now - 7 * 24 * 60 * 60 * 1000) / 1000).toString();
-      else if (timeframe === "30d") startTs = Math.floor((now - 30 * 24 * 60 * 60 * 1000) / 1000).toString();
-      
-      const params = new URLSearchParams({
-        market: tokenId,
-        interval: timeframe === "1d" ? "1h" : "1d",
-        fidelity: "60",
-      });
-      if (startTs) params.append("startTs", startTs);
+  const data = useMemo(() => {
+    if (!history || !Array.isArray(history)) return [];
+    
+    const now = Date.now();
+    let startTs = 0;
+    if (timeframe === "1d") startTs = now - 24 * 60 * 60 * 1000;
+    else if (timeframe === "7d") startTs = now - 7 * 24 * 60 * 60 * 1000;
+    else if (timeframe === "30d") startTs = now - 30 * 24 * 60 * 60 * 1000;
 
-      const res = await fetch(`/api/prices-history?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch price history");
-      const json = await res.json();
-      
-      const rows = Array.isArray(json) ? json : (json.history ?? []);
-      return rows.map((row: any) => ({
-        t: Number(row.t ?? row.timestamp ?? 0) * 1000,
-        p: Number(row.p ?? row.close ?? 0) * 100, // Convert to 0-100%
-      })).filter((pt: any) => pt.t > 0 && pt.p >= 0 && pt.p <= 100);
-    },
-    staleTime: 60_000,
-  });
+    return history
+      .filter((h) => {
+        const t = h.t * 1000; // backend returns seconds typically, but check if it's already ms
+        // ensure t is in ms
+        const msT = t < 10000000000 ? t * 1000 : t;
+        return startTs === 0 || msT >= startTs;
+      })
+      .map((h) => {
+         const t = h.t < 10000000000 ? h.t * 1000 : h.t;
+         return {
+           t,
+           p: h.p * 100, // convert 0-1 to 0-100
+         };
+      });
+  }, [history, timeframe]);
 
   return (
     <div className="w-full flex flex-col h-[400px]">
@@ -65,9 +58,7 @@ export default function ProbabilityChart({ tokenId }: ProbabilityChartProps) {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex-1 animate-pulse bg-[#1e1e3a]/20 rounded-xl" />
-      ) : isError || !data || data.length === 0 ? (
+      {!data || data.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-sm text-[#6d7488] border border-[#1e1e3a] rounded-xl bg-[#0c1019]">
           No price history available.
         </div>
@@ -126,10 +117,6 @@ export default function ProbabilityChart({ tokenId }: ProbabilityChartProps) {
                 }}
               />
               <ReferenceLine y={50} stroke="#30385c" strokeDasharray="3 3" />
-              
-              {/* Note: Recharts doesn't natively support dynamic gradient based on Y threshold cleanly in a single Area.
-                  A common trick is to use an SVG mask or just color based on the latest point.
-                  We'll use green if the latest point is >= 50, else red. */}
               <Area 
                 type="stepAfter" 
                 dataKey="p" 

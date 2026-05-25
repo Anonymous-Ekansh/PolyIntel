@@ -1,38 +1,17 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Layers } from "lucide-react";
 import { formatUsd } from "@/lib/utils";
 
 interface OrderBookPanelProps {
-  tokenId: string;
+  book: {
+    bids: any[];
+    asks: any[];
+  };
 }
 
-export default function OrderBookPanel({ tokenId }: OrderBookPanelProps) {
-  const { data: book, isLoading, isError } = useQuery({
-    queryKey: ["orderbook", tokenId],
-    queryFn: async () => {
-      const res = await fetch(`/api/orderbook?token_id=${tokenId}`);
-      if (!res.ok) throw new Error("Failed to fetch orderbook");
-      const json = await res.json();
-      return {
-        bids: Array.isArray(json.bids) ? json.bids : [],
-        asks: Array.isArray(json.asks) ? json.asks : [],
-      };
-    },
-    refetchInterval: 5000, // fast refresh for orderbook
-  });
-
-  if (isLoading) {
-    return (
-      <div className="animate-pulse space-y-2">
-        <div className="h-8 bg-[#1e1e3a]/30 rounded" />
-        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-6 bg-[#1e1e3a]/20 rounded" />)}
-      </div>
-    );
-  }
-
-  if (isError || !book) {
+export default function OrderBookPanel({ book }: OrderBookPanelProps) {
+  if (!book || (!book.bids.length && !book.asks.length)) {
     return (
       <div className="rounded-xl border border-[#1e1e3a] bg-[#101422] p-6 text-center text-sm text-[#8b93a7]">
         Orderbook temporarily unavailable.
