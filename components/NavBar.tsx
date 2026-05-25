@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Eye, Home, TerminalSquare } from "lucide-react";
+import { BarChart3, Eye, Home, TerminalSquare, Zap, Brain } from "lucide-react";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,8 @@ export default function NavBar() {
   const links = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/markets", label: "Markets", icon: BarChart3 },
+    { href: "/analyze", label: "Analyze", icon: Brain },
+    { href: "/intelligence", label: "Intel", icon: Zap },
     { href: "/watchlist", label: "Watchlist", icon: Eye, badge: count },
   ];
 
