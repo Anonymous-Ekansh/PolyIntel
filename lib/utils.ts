@@ -23,7 +23,9 @@ export function formatUsd(value: number, compact = false) {
 }
 
 export function formatPercent(value: number, digits = 1) {
-  return `${(value * 100).toFixed(digits)}%`
+  // Backend returns prices in 0-100 range. If value > 1, treat as already a percentage.
+  const pct = value > 1 ? value : value * 100;
+  return `${pct.toFixed(digits)}%`;
 }
 
 export function truncateMiddle(value: string, head = 6, tail = 4) {
