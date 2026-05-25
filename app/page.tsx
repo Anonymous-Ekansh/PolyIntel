@@ -164,7 +164,9 @@ export default function DashboardPage() {
                             <span>•</span>
                             <span>Score: {pick.advisor.finalScore > 0 ? "+" : ""}{pick.advisor.finalScore}</span>
                           </div>
-                          <p className="mt-2 text-[10px] text-[#6d7488] line-clamp-2 leading-relaxed">{pick.advisor.reasoning}</p>
+                          <p className="mt-2 text-[10px] text-[#6d7488] line-clamp-2 leading-relaxed">
+                            {typeof pick.advisor.reasoning === 'string' ? pick.advisor.reasoning : pick.advisor.reasoning?.inference}
+                          </p>
                         </CardContent>
                       </Card>
                     </Link>
@@ -198,7 +200,9 @@ export default function DashboardPage() {
                             <span>•</span>
                             <span>Score: {pick.advisor.finalScore}</span>
                           </div>
-                          <p className="mt-2 text-[10px] text-[#6d7488] line-clamp-2 leading-relaxed">{pick.advisor.reasoning}</p>
+                          <p className="mt-2 text-[10px] text-[#6d7488] line-clamp-2 leading-relaxed">
+                            {typeof pick.advisor.reasoning === 'string' ? pick.advisor.reasoning : pick.advisor.reasoning?.inference}
+                          </p>
                         </CardContent>
                       </Card>
                     </Link>
