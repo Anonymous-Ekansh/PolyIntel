@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { Brain, ChevronDown, ChevronUp, AlertTriangle, Shield, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPercent, formatUsd } from "@/lib/utils";
+import { fetchAnalyzeTop } from "@/lib/api";
 import ScoreBadge from "@/components/shared/ScoreBadge";
 import FactorBar from "@/components/shared/FactorBar";
 import ConfidenceDots from "@/components/shared/ConfidenceDots";
@@ -13,12 +14,6 @@ import ConfidenceDots from "@/components/shared/ConfidenceDots";
 const FILTERS = ["ALL", "STRONG YES", "LEAN YES", "WEAK YES", "SKIP", "WEAK NO", "LEAN NO", "STRONG NO"];
 const SORT_OPTIONS = ["score", "volume", "confidence", "daysLeft"] as const;
 const CONFIDENCE_FILTERS = ["Any", "MEDIUM", "HIGH"];
-
-async function fetchAnalyzeTop() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ""}/api/analyze/top`);
-  if (!res.ok) throw new Error("Failed to fetch analysis");
-  return res.json();
-}
 
 export default function AnalyzePage() {
   const [filter, setFilter] = useState("ALL");
