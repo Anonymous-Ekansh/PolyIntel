@@ -1,4 +1,4 @@
-# 🌐 POLYINTEL | Polymarket Decision Intelligence Platform
+# POLYINTEL | Polymarket Decision Intelligence Platform
 
 POLYINTEL is a professional-grade prediction market intelligence dashboard and terminal designed to analyze, score, and monitor live Polymarket contracts. The system features a deterministic multi-factor scoring engine (Smart Bet Advisor), real-time anomaly detection, cross-market correlation analysis, automatic news matching with sentiment tracking, and a simulated paper-trading portfolio with risk controls.
 
